@@ -18,7 +18,7 @@
 - tm2fk - the number of first kills made by the second team;
 - tm1clwon - number of clutches the first team won;
 - tm2clwon - number of cluthes the second team won;
-- The players are numbered from 1 to 10. Players 1-5 are the players of the first team, players 6-10 are the players of the second team. Each player has a set of parameters.
+- The players are numbered from 1 to 10. Players 1-5 are the players of the first team, players 6-10 are the players of the second team. Each player has a set of parameters:
   + pl#nm - player nickname;
   + pl#kills - number of player`s kills;
   + pl#asts - number of player`s assists;
