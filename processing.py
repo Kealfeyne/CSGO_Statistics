@@ -57,12 +57,14 @@ class Dataset:
 
         return self.df
 
-    def build_dataset(self, df_columns: np.array) -> pd.DataFrame:
+    def build_dataset(self, df_columns: np.array, drop_nans: bool) -> pd.DataFrame:
         """
         Строит датасет по заданным количествам исторических матчей
         :param df_columns:
         :return:
         """
+        self.process_dataset(drop_nans=drop_nans)
+
         features_names = np.array([])
         for i in range(self.number_of_common_past_matches + self.number_of_past_tm1_matches
                        + self.number_of_past_tm2_matches):
@@ -151,14 +153,14 @@ features_columns = np.concatenate((np.array(['map']), np.concatenate(
     (np.array(first_team_columns), np.array(second_team_columns), ['target', 'class_target']))))
 
 preprocessed_dataset = pd.read_csv("data/preprocessed_dataset.csv", header=0, index_col=0, parse_dates=['date'])
-# datasets_params_grid = [(1, 1, 1), (1, 2, 2), (1, 3, 3), (1, 4, 4), (1, 5, 5), (1, 6, 6), (1, 7, 7), (1, 8, 8), (1, 9, 9), (1, 10, 10),
-#                         (2, 1, 1), (2, 2, 2), (2, 3, 3), (2, 4, 4), (2, 5, 5), (2, 6, 6), (2, 7, 7), (2, 8, 8), (2, 9, 9), (2, 10, 10),
-#                         (3, 1, 1), (3, 2, 2), (3, 3, 3), (3, 4, 4), (3, 5, 5), (3, 6, 6), (3, 7, 7), (3, 8, 8), (3, 9, 9), (3, 10, 10)]
-datasets_params_grid = [(1, 5, 5), (1, 10, 10), (1, 15, 15), (1, 20, 20),
-                        (2, 1, 1), (2, 5, 5), (2, 10, 10), (2, 15, 15), (2, 20, 20),
-                        (3, 1, 1), (3, 5, 5), (3, 10, 10), (3, 15, 15), (3, 20, 20),
-                        (4, 1, 1), (4, 5, 5), (4, 10, 10), (4, 15, 15), (4, 20, 20),
-                        (5, 1, 1), (5, 5, 5), (5, 10, 10), (5, 15, 15), (5, 20, 20)]
+
+# datasets_params_grid = [(1, 5, 5), (1, 10, 10), (1, 15, 15), (1, 20, 20),
+#                         (2, 1, 1), (2, 5, 5), (2, 10, 10), (2, 15, 15), (2, 20, 20),
+#                         (3, 1, 1), (3, 5, 5), (3, 10, 10), (3, 15, 15), (3, 20, 20),
+#                         (4, 1, 1), (4, 5, 5), (4, 10, 10), (4, 15, 15), (4, 20, 20),
+#                         (5, 1, 1), (5, 5, 5), (5, 10, 10), (5, 15, 15), (5, 20, 20)]
+
+datasets_params_grid = [(2, 5, 5), (2, 10, 10), (3, 5, 5), (3, 10, 10)]
 
 for common, tm1, tm2 in datasets_params_grid:
     print(f"Создается {common}, {tm1}, {tm2}")
@@ -167,6 +169,6 @@ for common, tm1, tm2 in datasets_params_grid:
                       number_of_past_tm1_matches=tm1,
                       number_of_past_tm2_matches=tm2)
 
-    built = dataset.build_dataset(df_columns=features_columns)
+    built = dataset.build_dataset(df_columns=features_columns, drop_nans=True)
 
     built.to_csv(f"data/datasets_to_model/{common}_{tm1}_{tm2}_dataset.csv")
