@@ -1,2 +1,6 @@
 /.idea/
 /data/
+/catboost_models/catboost_info
+/catboost_models/models
+/catboost_models/evaluating
+/preprocessed_data
