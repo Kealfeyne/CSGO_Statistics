@@ -17,7 +17,7 @@ def pool_dataset(dataset: pd.DataFrame, drop_nans: bool = True, test_size: float
 
     X_train, X_test, y_train, y_test = train_test_split(dataset.drop(["target", "class_target"], axis=1),
                                                         dataset["class_target"], test_size=test_size,
-                                                        random_state=random_state)
+                                                        random_state=random_state, stratify=dataset["class_target"])
 
     pooled_train = Pool(data=X_train,
                         label=y_train,
@@ -39,28 +39,24 @@ def fit_catboost(dataset_params: tuple, pooled_train: Pool, pooled_eval: Pool, i
                              loss_function=loss_function,
                              eval_metric=metric)
 
+    print("Обучение...")
     cbc.fit(pooled_train,
             eval_set=pooled_eval,
             use_best_model=True,
             verbose=False)
-
+    print("Сохранение...")
     cbc.save_model(
-        f"models/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth.cbm",
+        f"{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth.cbm",
         format="cbm")
 
+    print("Логирование...")
     train_results = cbc.get_evals_result()
     eval_metrics = cbc.eval_metrics(data=pooled_eval, metrics=["Accuracy", "F1", "Recall", "Precision"])
 
     features_importance = cbc.feature_importances_
-    important_ids = np.array(cbc.feature_importances_).argsort()[-15:]
-    # print("important", features_importance[important_ids])
-    # print("important_columns", dataset.columns[important_ids].to_list())
+    important_ids = np.array(cbc.feature_importances_).argsort()[-30:]
 
-
-    print(dataset.columns[important_ids].to_list())
-    print(list(features_importance[important_ids]))
-
-    graphs = {
+    logs = {
         'train_loss': train_results["learn"][loss_function],
         'train_f1': train_results["learn"][metric],
         'val_loss': train_results["validation"][loss_function],
@@ -75,27 +71,35 @@ def fit_catboost(dataset_params: tuple, pooled_train: Pool, pooled_eval: Pool, i
             'importance_values': list(features_importance[important_ids])}
     }
 
-    with open(f'evaluating/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth_logs.json', 'w') as fp:
-        json.dump(graphs, fp)
+    with open(
+            f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth_logs.json',
+            'w') as fp:
+        json.dump(logs, fp)
 
-    print(graphs['val_metrics'])
-
-    return cbc, graphs
+    return cbc, logs
 
 
-dataset_params = (3, 5, 5)
-dataset = pd.read_csv(f"../preprocessed_data/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_dataset.csv",
-                      index_col=0)
+dataset_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
+                       (2, 5, 5), (2, 10, 10),
+                       (3, 5, 5), (3, 10, 10)]
 
-pooled_train, pooled_eval = pool_dataset(dataset=dataset, random_state=90)
+for dataset_params in dataset_params_grid:
+    dataset = pd.read_csv(
+        f"../data/datasets_to_model/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_dataset.csv",
+        index_col=0)
+    min_counts = min(dataset[dataset["class_target"] == 0].shape[0], dataset[dataset["class_target"] == 1].shape[0])
+    dataset = pd.concat(
+        [dataset[dataset["class_target"] == 0][:min_counts], dataset[dataset["class_target"] == 1][:min_counts]])
 
-model, graphs = fit_catboost(dataset_params=dataset_params,
-                             pooled_train=pooled_train,
-                             pooled_eval=pooled_eval,
-                             iterations=300,
-                             depth=5,
-                             loss_function="CrossEntropy",
-                             metric="F1")
+    pooled_train, pooled_eval = pool_dataset(dataset=dataset, random_state=90)
+
+    model, metrics = fit_catboost(dataset_params=dataset_params,
+                                  pooled_train=pooled_train,
+                                  pooled_eval=pooled_eval,
+                                  iterations=300,
+                                  depth=5,
+                                  loss_function="CrossEntropy",
+                                  metric="F1")
 
 # model = CatBoostClassifier()  # parameters not required.
 # model.load_model('model_name')
