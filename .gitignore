@@ -1,6 +1,7 @@
 /.idea/
 /data/
+/data_not_switched_teams
 /catboost_models/catboost_info
 /catboost_models/models
-/catboost_models/evaluating
+/catboost_models/logs
 /preprocessed_data

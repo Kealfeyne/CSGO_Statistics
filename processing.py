@@ -34,9 +34,8 @@ class Dataset:
         class_targets = np.array([])
         for i, r in matches.iterrows():  # Обязательно перепроверить как меняются местами команды
             if team_name == r["tm2"]:
-                buffer = r[first_team_columns]
-                r[first_team_columns] = r[second_team_columns].values
-                r[second_team_columns] = buffer.values
+                matches.loc[i, first_team_columns] = r[second_team_columns].values
+                matches.loc[i, second_team_columns] = r[first_team_columns].values
 
             targets = np.append(targets, [r["tm1pts"] / max(r["tm2pts"], 1)])
             class_targets = np.append(class_targets, [int(r["tm1pts"] >= r["tm2pts"])])
@@ -57,9 +56,12 @@ class Dataset:
 
         return self.df
 
-    def build_dataset(self, df_columns: np.array, drop_nans: bool) -> pd.DataFrame:
+    def build_dataset(self, features_columns: np.array, drop_nans: bool = False,
+                      same_map: bool = False) -> pd.DataFrame:
         """
         Строит датасет по заданным количествам исторических матчей
+        :param same_map:
+        :param drop_nans:
         :param df_columns:
         :return:
         """
@@ -75,8 +77,12 @@ class Dataset:
         for index, row in tqdm(self.df.iterrows(), total=self.df.shape[0]):
             tm1_name = row["tm1"]
             tm2_name = row["tm2"]
+            map = row["map"]
             # Все матчи, следующие после итерируемого
-            past_matches = self.df.iloc[index + 1:]
+            if same_map:
+                past_matches = self.df[self.df["map"] == map].iloc[index + 1:]
+            else:
+                past_matches = self.df.iloc[index + 1:]
 
             # Условие, что команды играли в порядке первая, вторая и вторая, первая
             is_first_second_played = (past_matches['tm1'] == tm1_name) & (past_matches['tm2'] == tm2_name)
@@ -154,21 +160,19 @@ features_columns = np.concatenate((np.array(['map']), np.concatenate(
 
 preprocessed_dataset = pd.read_csv("data/preprocessed_dataset.csv", header=0, index_col=0, parse_dates=['date'])
 
-# datasets_params_grid = [(1, 5, 5), (1, 10, 10), (1, 15, 15), (1, 20, 20),
-#                         (2, 1, 1), (2, 5, 5), (2, 10, 10), (2, 15, 15), (2, 20, 20),
-#                         (3, 1, 1), (3, 5, 5), (3, 10, 10), (3, 15, 15), (3, 20, 20),
-#                         (4, 1, 1), (4, 5, 5), (4, 10, 10), (4, 15, 15), (4, 20, 20),
-#                         (5, 1, 1), (5, 5, 5), (5, 10, 10), (5, 15, 15), (5, 20, 20)]
-
-datasets_params_grid = [(2, 5, 5), (2, 10, 10), (3, 5, 5), (3, 10, 10)]
+datasets_params_grid = [# (1, 1, 1), (1, 5, 5), (1, 10, 10),
+                        (2, 1, 1), (2, 5, 5), (2, 10, 10),
+                        (5, 1, 1), (5, 5, 5), (5, 10, 10)]
 
 for common, tm1, tm2 in datasets_params_grid:
-    print(f"Создается {common}, {tm1}, {tm2}")
+    print(f"Создается {common}, {tm1}, {tm2}...")
     dataset = Dataset(data=preprocessed_dataset,
                       number_of_common_past_matches=common,
                       number_of_past_tm1_matches=tm1,
                       number_of_past_tm2_matches=tm2)
 
-    built = dataset.build_dataset(df_columns=features_columns, drop_nans=True)
+    built = dataset.build_dataset(features_columns=features_columns,
+                                  drop_nans=True,
+                                  same_map=False)
 
-    built.to_csv(f"data/datasets_to_model/{common}_{tm1}_{tm2}_dataset.csv")
+    built.to_csv(f"data/datasets_to_model/{common}_{tm1}_{tm2}_wonans_dataset.csv")

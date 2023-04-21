@@ -30,7 +30,7 @@ def pool_dataset(dataset: pd.DataFrame, drop_nans: bool = True, test_size: float
 
 
 def fit_catboost(dataset_params: tuple, pooled_train: Pool, pooled_eval: Pool, iterations: int, depth: int,
-                 loss_function: str, metric: str):
+                 loss_function: str, metric: str, dataset_tag: str):
     cbc = CatBoostClassifier(iterations=iterations,
                              depth=depth,
                              random_seed=42,
@@ -46,7 +46,7 @@ def fit_catboost(dataset_params: tuple, pooled_train: Pool, pooled_eval: Pool, i
             verbose=False)
     print("Сохранение...")
     cbc.save_model(
-        f"{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth.cbm",
+        f"models/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth.cbm",
         format="cbm")
 
     print("Логирование...")
@@ -72,20 +72,21 @@ def fit_catboost(dataset_params: tuple, pooled_train: Pool, pooled_eval: Pool, i
     }
 
     with open(
-            f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth_logs.json',
+            f'logs/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{iterations}iterations_{depth}depth_{dataset_tag}_logs.json',
             'w') as fp:
         json.dump(logs, fp)
 
     return cbc, logs
 
 
-dataset_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
-                       (2, 5, 5), (2, 10, 10),
-                       (3, 5, 5), (3, 10, 10)]
+dataset_params_grid = [(1, 5, 5), (2, 5, 5), (2, 10, 10),
+                       (3, 5, 5), (3, 10, 10), (4, 1, 1), (4, 5, 5), (5, 1, 1), (5, 5, 5)]
+
+tag = ""
 
 for dataset_params in dataset_params_grid:
     dataset = pd.read_csv(
-        f"../data/datasets_to_model/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_dataset.csv",
+        f"../data/datasets_to_model/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_{tag}_dataset.csv",
         index_col=0)
     min_counts = min(dataset[dataset["class_target"] == 0].shape[0], dataset[dataset["class_target"] == 1].shape[0])
     dataset = pd.concat(
@@ -99,7 +100,8 @@ for dataset_params in dataset_params_grid:
                                   iterations=300,
                                   depth=5,
                                   loss_function="CrossEntropy",
-                                  metric="F1")
+                                  metric="F1",
+                                  dataset_tag=tag)
 
 # model = CatBoostClassifier()  # parameters not required.
 # model.load_model('model_name')
