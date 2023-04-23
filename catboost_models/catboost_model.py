@@ -34,11 +34,11 @@ class CatBoostModel:
         cbc.fit(pooled_train,
                 eval_set=pooled_eval,
                 use_best_model=True,
-                verbose=False)
+                verbose=True)
 
         print("Сохранение...")
         cbc.save_model(
-            f"models/{experiment_id}_{self.iterations}iterations_{self.depth}depth.cbm",
+            f"catboost_models/models/{experiment_id}.cbm",
             format="cbm")
 
         print("Логирование модели...")
@@ -64,7 +64,7 @@ class CatBoostModel:
         }
 
         with open(
-                f'logs/{experiment_id}_{self.iterations}iterations_{self.depth}depth_logs.json',
+                f'catboost_models/logs/{experiment_id}.json',
                 'w') as fp:
             json.dump(model_logs, fp)
 
@@ -78,4 +78,4 @@ class CatBoostModel:
 
         }
 
-        return experiment_logs
+        return crossval_logs

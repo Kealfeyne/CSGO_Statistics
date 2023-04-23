@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import json
 
+from catboost_models.catboost_model import CatBoostModel
+from knn_models.knn_model import KnnModel
+
 
 class CrossValidation:
     def __init__(self, data: pd.DataFrame, part_counts: int):
@@ -15,13 +18,13 @@ class CrossValidation:
 
         for part in range(self.part_counts):
             test_data = self.data.iloc[part * self.test_size: (part + 1) * self.test_size, :]
-            train_data = self.data.drop(test_data)
+            train_data = self.data.drop(test_data.index)
 
             model_logs = model.analyse(train_data, test_data, f"{part}_{experiment_id}")
             logs[f"cross_val_{part}"] = model_logs
 
             accuracies.append(model_logs['validation_accuracy'])
-            f1_scores.append(model_logs['validation_f1score'])
+            f1_scores.append(model_logs['validation_f1'])
             recalls.append(model_logs["validation_recall"])
             precisions.append(model_logs["validation_precision"])
 
@@ -55,3 +58,12 @@ class CrossValidation:
             json.dump(experiment_logs, fp)
 
         return experiment_logs
+
+
+df = pd.read_csv(f"data/datasets_to_model/{2}_{1}_{1}_wonans_small_extracted.csv",
+                 index_col=0)
+cv = CrossValidation(df, 5)
+# cv.validate_model(model=CatBoostModel(iterations=500, depth=3),
+#                   experiment_id='2_1_1_wonans_small_extr_catb_500_3')
+cv.validate_model(model=KnnModel(n_neighbors=1000),
+                  experiment_id='2_1_1_wonans_small_extr_knn_1000')

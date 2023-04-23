@@ -160,9 +160,11 @@ features_columns = np.concatenate((np.array(['map']), np.concatenate(
 
 preprocessed_dataset = pd.read_csv("data/preprocessed_dataset.csv", header=0, index_col=0, parse_dates=['date'])
 
-datasets_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
-                        (2, 1, 1), (2, 5, 5), (2, 10, 10),
-                        (5, 1, 1), (5, 5, 5), (5, 10, 10)]
+# datasets_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
+#                         (2, 1, 1), (2, 5, 5), (2, 10, 10),
+#                         (5, 1, 1), (5, 5, 5), (5, 10, 10)]
+
+datasets_params_grid = [(5, 0, 0)]
 
 for common, tm1, tm2 in datasets_params_grid:
     print(f"Создается {common}, {tm1}, {tm2}...")
@@ -172,7 +174,7 @@ for common, tm1, tm2 in datasets_params_grid:
                       number_of_past_tm2_matches=tm2)
 
     built = dataset.build_dataset(features_columns=features_columns,
-                                  drop_nans=True,
-                                  same_map=True)
+                                  drop_nans=False,
+                                  same_map=False)
 
-    built.to_csv(f"data/datasets_to_model/{common}_{tm1}_{tm2}_wonans_samemap_dataset.csv")
+    built.to_csv(f"data/datasets_to_model/{common}_{tm1}_{tm2}_wnans_dataset.csv")
