@@ -3,18 +3,18 @@ import pandas as pd
 import json
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 
-class KnnModel:
-    def __init__(self, n_neighbors):
-        self.n_neighbors = n_neighbors
+class RandomForestModel:
+    def __init__(self, n_estimators):
+        self.n_estimators = n_estimators
 
     def analyse(self, train_data, test_data, experiment_id, normalize):
         numeric_features = train_data.dtypes[
             (train_data.dtypes == np.float64) | (train_data.dtypes == np.int64)].index.tolist()
-        print(f"kNN, {self.n_neighbors} neighbours, Обучение...")
-        knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
+        print(f"RandomForest, {self.n_estimators} estimators, Обучение...")
+        forest = RandomForestClassifier(n_estimators=self.n_estimators)
 
         if normalize:
             scaler = MinMaxScaler()
@@ -27,10 +27,10 @@ class KnnModel:
         y_train = train_data["class_target"]
         y_test = test_data["class_target"]
 
-        knn.fit(X=X_train,
-                y=y_train)
+        forest.fit(X=X_train,
+                   y=y_train)
 
-        preds = knn.predict(X=X_test)
+        preds = forest.predict(X=X_test)
 
         print(np.unique(np.array(preds), return_counts=True))
 

@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import json
 
-from catboost_models.catboost_model import CatBoostModel
 from knn_models.knn_model import KnnModel
+from random_forest_models.random_forest_model import RandomForestModel
+from catboost_models.catboost_model import CatBoostModel
 
 
 class CrossValidation:
@@ -12,7 +13,7 @@ class CrossValidation:
         self.data = data
         self.test_size = data.shape[0] // part_counts
 
-    def validate_model(self, model, experiment_id: str):
+    def validate_model(self, model, experiment_id: str, normalize: bool, path_to_logs: str):
         logs = {}
         accuracies, f1_scores, recalls, precisions = [], [], [], []
 
@@ -20,7 +21,7 @@ class CrossValidation:
             test_data = self.data.iloc[part * self.test_size: (part + 1) * self.test_size, :]
             train_data = self.data.drop(test_data.index)
 
-            model_logs = model.analyse(train_data, test_data, experiment_id)
+            model_logs = model.analyse(train_data, test_data, experiment_id, normalize)
             logs[f"cross_val_{part}"] = model_logs
 
             accuracies.append(model_logs['validation_accuracy'])
@@ -53,22 +54,43 @@ class CrossValidation:
         }
 
         with open(
-                f'cross_validation_evaluating/{experiment_id}_metrics.json',
+                f'{path_to_logs}/{experiment_id}_metrics.json',
                 'w') as fp:
             json.dump(experiment_logs, fp)
 
         return experiment_logs
 
 
-df = pd.read_csv(f"data/datasets_to_model/{1}_{1}_{1}_wonans_dataset.csv",
-                 index_col=0)
+dataset_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
+                       (2, 1, 1), (2, 5, 5), (2, 10, 10),
+                       (5, 1, 1), (5, 5, 5), (5, 10, 10)]
 
-experiment_id = '1_1_1_wonans_catb_2'
+# model_params_grid = [0.01, 0.05, 0.1, 0.2]
+model_params_grid = [10, 25, 100, 250]
+# model_params_grid = [2, 3, 5, 10]
 
-cv = CrossValidation(df, 5)
 
-cv.validate_model(model=CatBoostModel(iterations=500, depth=2),
-                  experiment_id=experiment_id)
+for dataset_params in dataset_params_grid:
+    print(f"Dataset params: {dataset_params}...")
+    df = pd.read_csv(
+        f"data/datasets_to_model/{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_dataset.csv",
+        index_col=0)
 
-# cv.validate_model(model=KnnModel(n_neighbors=int(df.shape[0] * 0.8 * neighbours_part)),
-#                   experiment_id=f'5_10_10_wonans_knn_{neighbours_part}')
+    for model_params in model_params_grid:
+        print(f"Model params: {model_params}...")
+
+        cv = CrossValidation(df, 5)
+
+        # cv.validate_model(model=KnnModel(n_neighbors=int(df.shape[0] * 0.8 * model_params)),
+        #                   experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_knn_normalized_{model_params}',
+        #                   normalize=True)
+
+        cv.validate_model(model=RandomForestModel(n_estimators=model_params),
+                          experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_rf_{model_params}',
+                          normalize=False,
+                          path_to_logs="random_forest_models")
+
+        # cv.validate_model(model=CatBoostModel(iterations=500, depth=model_params),
+        #                   experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_catb_{model_params}')
+
+

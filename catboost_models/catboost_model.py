@@ -11,21 +11,21 @@ class CatBoostModel:
         self.depth = depth
 
     def analyse(self, train_data, test_data, experiment_id):
-        categorial_features = train_data.dtypes[
+        categorical_features = train_data.dtypes[
             (train_data.dtypes != np.float64) & (train_data.dtypes != np.int64)].index.tolist()
 
         pooled_train = Pool(data=train_data.drop(['target', 'class_target'], axis=1),
                             label=train_data['class_target'],
-                            cat_features=categorial_features)
+                            cat_features=categorical_features)
 
         pooled_eval = Pool(data=test_data.drop(['target', 'class_target'], axis=1),
                            label=test_data['class_target'],
-                           cat_features=categorial_features)
+                           cat_features=categorical_features)
 
         cbc = CatBoostClassifier(iterations=self.iterations,
                                  depth=self.depth,
                                  random_seed=42,
-                                 task_type="GPU",
+                                 # task_type="GPU",
                                  devices="0:1",
                                  loss_function='CrossEntropy',
                                  eval_metric="F1")
@@ -36,10 +36,10 @@ class CatBoostModel:
                 use_best_model=True,
                 verbose=False)
 
-        print("Сохранение...")
-        cbc.save_model(
-            f"catboost_models/models/{experiment_id}.cbm",
-            format="cbm")
+        # print("Сохранение...")
+        # cbc.save_model(
+        #     f"catboost_models/models/{experiment_id}.cbm",
+        #     format="cbm")
 
         print("Логирование модели...")
         train_results = cbc.get_evals_result()
@@ -70,6 +70,8 @@ class CatBoostModel:
 
         preds = cbc.predict(pooled_eval)
 
+        print(np.unique(np.array(preds), return_counts=True))
+
         crossval_logs = {
             'validation_accuracy': accuracy_score(test_data['class_target'], preds),
             'validation_f1': f1_score(test_data['class_target'], preds),
@@ -77,5 +79,7 @@ class CatBoostModel:
             'validation_precision': precision_score(test_data['class_target'], preds)
 
         }
+
+        print(crossval_logs)
 
         return crossval_logs
