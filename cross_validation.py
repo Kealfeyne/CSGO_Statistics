@@ -20,7 +20,7 @@ class CrossValidation:
             test_data = self.data.iloc[part * self.test_size: (part + 1) * self.test_size, :]
             train_data = self.data.drop(test_data.index)
 
-            model_logs = model.analyse(train_data, test_data, f"{part}_{experiment_id}")
+            model_logs = model.analyse(train_data, test_data, experiment_id)
             logs[f"cross_val_{part}"] = model_logs
 
             accuracies.append(model_logs['validation_accuracy'])
@@ -60,10 +60,15 @@ class CrossValidation:
         return experiment_logs
 
 
-df = pd.read_csv(f"data/datasets_to_model/{2}_{1}_{1}_wonans_small_extracted.csv",
+df = pd.read_csv(f"data/datasets_to_model/{1}_{1}_{1}_wonans_dataset.csv",
                  index_col=0)
+
+experiment_id = '1_1_1_wonans_catb_2'
+
 cv = CrossValidation(df, 5)
-# cv.validate_model(model=CatBoostModel(iterations=500, depth=3),
-#                   experiment_id='2_1_1_wonans_small_extr_catb_500_3')
-cv.validate_model(model=KnnModel(n_neighbors=1000),
-                  experiment_id='2_1_1_wonans_small_extr_knn_1000')
+
+cv.validate_model(model=CatBoostModel(iterations=500, depth=2),
+                  experiment_id=experiment_id)
+
+# cv.validate_model(model=KnnModel(n_neighbors=int(df.shape[0] * 0.8 * neighbours_part)),
+#                   experiment_id=f'5_10_10_wonans_knn_{neighbours_part}')

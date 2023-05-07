@@ -34,7 +34,7 @@ class CatBoostModel:
         cbc.fit(pooled_train,
                 eval_set=pooled_eval,
                 use_best_model=True,
-                verbose=True)
+                verbose=False)
 
         print("Сохранение...")
         cbc.save_model(

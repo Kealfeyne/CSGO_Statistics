@@ -9,10 +9,10 @@ class KnnModel:
     def __init__(self, n_neighbors):
         self.n_neighbors = n_neighbors
 
-    def analyse(self, train_data, test_data, experiment_id):
+    def analyse(self, train_data, test_data):
         numeric_features = train_data.dtypes[
             (train_data.dtypes == np.float64) | (train_data.dtypes == np.int64)].index.tolist()
-        print("Обучение...")
+        print(f"kNN, {self.n_neighbors} neighbours, Обучение...")
         knn = KNeighborsClassifier(n_neighbors=self.n_neighbors)
 
         knn.fit(X=train_data[numeric_features].drop(['target', 'class_target'], axis=1),
