@@ -10,7 +10,7 @@ class CatBoostModel:
         self.iterations = iterations
         self.depth = depth
 
-    def analyse(self, train_data, test_data, experiment_id):
+    def analyse(self, train_data, test_data, experiment_id, normalize):
         categorical_features = train_data.dtypes[
             (train_data.dtypes != np.float64) & (train_data.dtypes != np.int64)].index.tolist()
 
