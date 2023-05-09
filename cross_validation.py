@@ -62,15 +62,14 @@ class CrossValidation:
         return experiment_logs
 
 
-dataset_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
+dataset_params_grid = [(1, 10, 10),
                        (2, 1, 1), (2, 5, 5), (2, 10, 10),
-                       (5, 1, 1), (5, 5, 5), (5, 10, 10)]
+                       (5, 1, 1), (5, 5, 5), (5, 10, 10)]  # (1, 1, 1), (1, 5, 5), (1, 10, 10),
 
 # model_params_grid = [0.01, 0.05, 0.1, 0.2]
 # model_params_grid = [2, 3, 5, 7, 10, 12, 15]
 # model_params_grid = [10, 25, 100, 250]
-model_params_grid = [2, 3, 5, 10, 12]
-
+model_params_grid = [10, 12]
 
 for dataset_params in dataset_params_grid:
     print(f"Dataset params: {dataset_params}...")
@@ -98,7 +97,7 @@ for dataset_params in dataset_params_grid:
         #                   normalize=True,
         #                   path_to_logs="random_forest_models")
 
-        cv.validate_model(model=CatBoostModel(iterations=500, depth=model_params),
+        cv.validate_model(model=CatBoostModel(iterations=300, depth=model_params),
                           experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_catb_{model_params}',
                           normalize=False,
                           path_to_logs="catboost_models")
