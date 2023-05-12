@@ -44,4 +44,4 @@ class KnnModel:
 
         print(crossval_logs)
 
-        return crossval_logs
+        return crossval_logs, preds

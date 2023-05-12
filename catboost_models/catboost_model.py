@@ -25,7 +25,7 @@ class CatBoostModel:
         cbc = CatBoostClassifier(iterations=self.iterations,
                                  depth=self.depth,
                                  random_seed=42,
-                                 # task_type="GPU",
+                                 task_type="GPU",
                                  devices="0:1",
                                  loss_function='CrossEntropy',
                                  eval_metric="F1")
@@ -82,4 +82,4 @@ class CatBoostModel:
 
         print(crossval_logs)
 
-        return crossval_logs
+        return crossval_logs, preds
