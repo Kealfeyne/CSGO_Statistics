@@ -24,12 +24,12 @@ class CrossValidation:
             train_data = self.data.drop(test_data.index)
 
             model_logs = model.analyse(train_data, test_data, experiment_id, normalize)
-            logs[f"cross_val_{part}"] = model_logs
+            logs[f"cross_val_{part}"], predictions = model_logs
 
-            accuracies.append(model_logs['validation_accuracy'])
-            f1_scores.append(model_logs['validation_f1'])
-            recalls.append(model_logs["validation_recall"])
-            precisions.append(model_logs["validation_precision"])
+            accuracies.append(model_logs[0]['validation_accuracy'])
+            f1_scores.append(model_logs[0]['validation_f1'])
+            recalls.append(model_logs[0]["validation_recall"])
+            precisions.append(model_logs[0]["validation_precision"])
 
         experiment_logs = {
             'cross_validation': logs,
@@ -67,7 +67,7 @@ dataset_params_grid = [(1, 1, 1), (1, 5, 5), (1, 10, 10),
                        (2, 1, 1), (2, 5, 5), (2, 10, 10),
                        (5, 1, 1), (5, 5, 5), (5, 10, 10)]
 
-model_params_grid = ["BestModels"]
+model_params_grid = [2, 3, 5, 7]
 
 for dataset_params in dataset_params_grid:
     print(f"Dataset params: {dataset_params}...")
@@ -96,7 +96,7 @@ for dataset_params in dataset_params_grid:
         #                   path_to_logs="random_forest_models")
 
         # cv.validate_model(model=CatBoostModel(iterations=300, depth=model_params),
-        #                   experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_catb_{model_params}',
+        #                   experiment_id=f'{dataset_params[0]}_{dataset_params[1]}_{dataset_params[2]}_wonans_catb_accuracy_{model_params}',
         #                   normalize=False,
         #                   path_to_logs="catboost_models")
 

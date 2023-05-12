@@ -23,7 +23,7 @@ class Ensemble:
         ensemble_preds = np.apply_along_axis(lambda x: int(np.sum(x) > 1), axis=0,
                                              arr=np.array([knn_preds, rf_preds, cb_preds]))
 
-        print(np.unique(np.array(ensemble_preds), return_counts=True))
+        print("ENSEMBLE PREDS:", np.unique(np.array(ensemble_preds), return_counts=True))
 
         crossval_logs = {
             'validation_accuracy': accuracy_score(test_data['class_target'], ensemble_preds),
@@ -35,4 +35,4 @@ class Ensemble:
 
         print(crossval_logs)
 
-        return crossval_logs
+        return crossval_logs, ensemble_preds

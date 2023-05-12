@@ -28,7 +28,7 @@ class CatBoostModel:
                                  task_type="GPU",
                                  devices="0:1",
                                  loss_function='CrossEntropy',
-                                 eval_metric="F1")
+                                 eval_metric="Accuracy")
 
         print("Обучение...")
         cbc.fit(pooled_train,
@@ -50,9 +50,9 @@ class CatBoostModel:
 
         model_logs = {
             'train_loss': train_results["learn"]["CrossEntropy"],
-            'train_f1': train_results["learn"]["F1"],
+            'train_acc': train_results["learn"]["Accuracy"],
             'val_loss': train_results["validation"]["CrossEntropy"],
-            'val_f1': train_results["validation"]["F1"],
+            'val_acc': train_results["validation"]["Accuracy"],
             'val_metrics': {
                 'val_accuracy': eval_metrics["Accuracy"],
                 'val_f1': eval_metrics["F1"],
