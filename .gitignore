@@ -1,0 +1,8 @@
+/.idea/
+/data/
+/data_not_switched_teams
+/catboost_info
+/catboost_models/catboost_info
+/catboost_models/models
+/catboost_models/logs
+/cross_validation_evaluating
