@@ -8,45 +8,12 @@ from sklearn.preprocessing import MinMaxScaler
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 
-class LSTM(nn.Module):
-    def __init__(self, input_size=114, hidden_size=256, num_layers=1):
-        super(LSTM, self).__init__()
-        self.num_layers = num_layers
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-
-        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
-                            num_layers=num_layers, batch_first=True)
-
-        self.fc1 = nn.Linear(hidden_size, 256)
-        self.fc2 = nn.Linear(256, 64)
-        self.fc3 = nn.Linear(64, 1)
-
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
-
-    def forward(self, x: torch.Tensor):
-        h_0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size))
-        c_0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size))
-
-        output, (hn, cn) = self.lstm(x, (h_0, c_0))
-        hn = hn.view(-1, self.hidden_size)
-
-        x = self.relu(hn)
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x)
-        x = self.relu(x)
-        x = self.fc3(x)
-        output = self.sigmoid(x)
-        return output
-
-
-def create_dataset(path_to_dataset: str = "../data/datasets_to_model/5_1_1_wonans_dataset.csv"):
-    data = pd.read_csv(path_to_dataset, index_col=0)
+def create_dataset(path_to_dataset: str = "../data/datasets_to_model/5_1_1_wonans_dataset.csv", n_samples=50000):
+    data = pd.read_csv(path_to_dataset, index_col=0)[:n_samples]
 
     numeric_features = data.dtypes[(data.dtypes == np.float64) |
                                    (data.dtypes == np.int64)].index.tolist()
@@ -71,6 +38,33 @@ def create_dataset(path_to_dataset: str = "../data/datasets_to_model/5_1_1_wonan
     return torch.Tensor(X), torch.Tensor(y).reshape(len(y), 1)
 
 
+class LSTM(nn.Module):
+    def __init__(self, input_size=114, hidden_size=256, num_layers=5):
+        super(LSTM, self).__init__()
+        self.num_layers = num_layers
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
+                            num_layers=num_layers, batch_first=True)
+
+        self.fc1 = nn.Linear(hidden_size * 5, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, 1)
+
+    def forward(self, x: torch.Tensor):
+        x, (hn, cn) = self.lstm(x)
+        # hn = hn.view(-1, self.hidden_size)
+        x = x.reshape(x.shape[0], -1)
+
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        output = F.sigmoid(self.fc4(x))
+        return output
+
+
 def train(model: LSTM, X_train: torch.Tensor, y_train: torch.Tensor, n_epochs: int = 1000, learning_rate: float = 0.001,
           X_eval: torch.Tensor = None, y_eval: torch.Tensor = None, eval_per_epochs: int = 10):
     criterion = torch.nn.BCELoss()
@@ -93,9 +87,9 @@ def train(model: LSTM, X_train: torch.Tensor, y_train: torch.Tensor, n_epochs: i
             preds = (logits > 0.5).detach().numpy()
 
             accuracy = accuracy_score(y_eval.flatten(), preds)
-            f1 = f1_score(y_eval.flatten(), preds)
-            recall = recall_score(y_eval.flatten(), preds)
-            precision = precision_score(y_eval.flatten(), preds)
+            f1 = f1_score(y_eval.flatten(), preds, zero_division=True)
+            recall = recall_score(y_eval.flatten(), preds, zero_division=True)
+            precision = precision_score(y_eval.flatten(), preds, zero_division=True)
 
             eval_losses.append(eval_loss)
             accuracies.append(accuracy)
@@ -105,18 +99,18 @@ def train(model: LSTM, X_train: torch.Tensor, y_train: torch.Tensor, n_epochs: i
     return model
 
 
-X, y = create_dataset()
+X, y = create_dataset(n_samples=200000)
 
-X_train, y_train = X[3000:], y[3000:]
-X_eval, y_eval = X[:3000], y[:3000]
+X_train, y_train = X[:X.size(0) // 5 * 4], y[:X.size(0) // 5 * 4]
+X_eval, y_eval = X[X.size(0) // 5 * 4:], y[X.size(0) // 5 * 4:]
 
 print(np.unique(y_eval.numpy().flatten(), return_counts=True))
 
 model = LSTM()
 model, losses, accs = train(model, X_train, y_train,
                             n_epochs=1000,
-                            learning_rate=0.1,
-                            eval_per_epochs=1,
+                            learning_rate=0.001,
+                            eval_per_epochs=2,
                             X_eval=X_eval,
                             y_eval=y_eval)
 
